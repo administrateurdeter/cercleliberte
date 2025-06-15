@@ -6,7 +6,6 @@ import discord
 from discord.ext import commands
 
 from config import BOT_TOKEN, GUILD_ID
-from keep_alive import keep_alive
 
 # Le logging reste le même
 logging.basicConfig(filename="bot.log",
@@ -32,7 +31,7 @@ async def run_bot():
         except Exception as e:
             logging.error(f"Erreur de synchronisation des slash commands: {e}")
         # On garde keep_alive ici pour qu'il se lance à chaque démarrage du bot
-        keep_alive()
+
 
     # Le démarrage du bot est maintenant encapsulé
     async with bot:
