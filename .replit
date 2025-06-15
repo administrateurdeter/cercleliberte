@@ -1,4 +1,4 @@
-entrypoint = "main.py"
+entrypoint = "launcher.py"
 modules = ["python-3.10"]
 
 hidden = [".pythonlibs"]
@@ -10,3 +10,7 @@ channel = "stable-23_05"
 run = ["python", "main.py"]
 deploymentTarget = "gce"
 ignorePorts = true
+
+[[ports]]
+localPort = 3000
+externalPort = 80

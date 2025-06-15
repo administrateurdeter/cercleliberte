@@ -1,42 +1,45 @@
-# This code is based on the following example:
-# https://discordpy.readthedocs.io/en/stable/quickstart.html#a-minimal-bot
+# Fichier main.py (Modifié pour être une fonction de démarrage)
 
-import os
-
+import asyncio
+import logging
 import discord
+from discord.ext import commands
 
-intents = discord.Intents.default()
-intents.message_content = True
+from config import BOT_TOKEN, GUILD_ID
+from keep_alive import keep_alive
 
-client = discord.Client(intents=intents)
+# Le logging reste le même
+logging.basicConfig(filename="bot.log",
+                    level=logging.INFO,
+                    format="%(asctime)s - %(levelname)s - %(message)s")
 
+# Cette fonction contient toute la logique de votre bot
+async def run_bot():
+    intents = discord.Intents.default()
+    intents.message_content = True
+    intents.members = True
 
-@client.event
-async def on_ready():
-    print('We have logged in as {0.user}'.format(client))
+    bot = commands.Bot(command_prefix="!", intents=intents)
 
+    initial_extensions = ["cogs.xp_cog", "cogs.commands_cog", "cogs.economy_cog"]
 
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
+    @bot.event
+    async def on_ready():
+        logging.info(f"✅ Connecté comme {bot.user}")
+        try:
+            await bot.tree.sync(guild=discord.Object(id=GUILD_ID))
+            logging.info("Slash commands synchronisées.")
+        except Exception as e:
+            logging.error(f"Erreur de synchronisation des slash commands: {e}")
+        # On garde keep_alive ici pour qu'il se lance à chaque démarrage du bot
+        keep_alive()
 
-    if message.content.startswith('$hello'):
-        await message.channel.send('Hello!')
+    # Le démarrage du bot est maintenant encapsulé
+    async with bot:
+        for ext in initial_extensions:
+            await bot.load_extension(ext)
+            logging.info(f"✅ Cog chargé : {ext}")
+        await bot.start(BOT_TOKEN)
 
-
-try:
-  token = os.getenv("TOKEN") or ""
-  if token == "":
-    raise Exception("Please add your token to the Secrets pane.")
-  client.run(token)
-except discord.HTTPException as e:
-    if e.status == 429:
-        print(
-            "The Discord servers denied the connection for making too many requests"
-        )
-        print(
-            "Get help from https://stackoverflow.com/questions/66724687/in-discord-py-how-to-solve-the-error-for-toomanyrequests"
-        )
-    else:
-        raise e
+# La partie qui lançait le bot (__main__) est supprimée d'ici.
+# Elle sera dans notre nouveau fichier de surveillance.
